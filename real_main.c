@@ -1,10 +1,7 @@
 //gcc main.c -o file_to_shell
 // ./file_to_shell test.txt
 
-//насколько я понял подобные решения имеют право на жизнь
-
-
-// TODO pr1 | pr2  N>=2
+// TODO pr1 | pr2  N>=2 DONE
 // TODO pr1<pr2 pr1>pr2 pr1>>pr2
 // TODO pr1 || pr2 (if pr1 failed run pr2)
 // TODO ... & (background mode)
@@ -39,7 +36,9 @@ int execute_command(char** params) {
 
     if (pid == -1) {perror("error fork!!\n");return 1;
     } else if (pid == 0) { // child process
-        execvp(params[0], params); //exec cmd
+
+        execvp(params[0], params); //exec command
+//        char *error = strerror(errno);
         perror("unknown command\n");
         return 0;
     } else { // parent process
@@ -77,10 +76,11 @@ int main(int argc, const char *argv[])
     char* params[MAX_NUM_PARAMS+1];
     char* argv1[MAX_NUM_PARAMS+1] = {0};
     char* argv2[MAX_NUM_PARAMS+1] = {0};
-    int k, y, x;
+    int k, y, i;
     int f = 1;
 
     if (argc!=2) {perror("filename passed incorrectly");return 1;}
+
     FILE* fl = fopen(argv[1],"r");
     if (fl == NULL) {perror("open file error");return 1;}
 
@@ -95,22 +95,47 @@ int main(int argc, const char *argv[])
                 printf("pipe found\n");break;
             }
         }
-        if (f==0) {
-            for (x=0; x<k; x++) {argv1[x]=params[x];}
+        if (f==0) {//if has '|'
+            for (i=0; i<y; i++) {argv1[i]=params[i];}
             int tmp = 0;
-            for (x=k+1; x< parsed_cnt; x++) {
-                argv2[tmp]=params[x];
+            for (i=y+1; i < parsed_cnt; i++) {
+                argv2[tmp]=params[i];
                 tmp++;
             }
-            if (execute_pipeline(argv1, argv2) == 0) break;
-        } else if (f==1) {
-            if (execute_command(params) == 0) break;
+            if (execute_pipeline(argv1, argv2) != 0) return 1;
+        } else if (f==1) {//if no '|'
+            if (execute_command(params) != 0) return 1;
         }
     }
+    fclose(fl);
+    /*
+    } else {
+
+        for (int s=1;s<argc;s++){strcpy(params[s],argv[s]);}
+        int parsed_cnt=argc-1;
+        if (strcmp(params[0], "exit") == 0) //exit
+        for (k=0; k < parsed_cnt; k++) {
+            if (strcmp(params[k], "|") == 0) {
+                f = 0; y = k;
+                printf("pipe found\n");break;
+            }
+        }
+        if (f==0) {//if has '|'
+            for (i=0; i<y; i++) {argv1[i]=params[i];}
+            int tmp = 0;
+            for (i=y+1; i < parsed_cnt; i++) {
+                argv2[tmp]=params[i];
+                tmp++;
+            }
+            if (execute_pipeline(argv1, argv2) != 0) return 1;
+        } else if (f==1) {//if no '|'
+            if (execute_command(params) != 0) return 1;
+        }
+
+*/
+
 
     //memset(command,0,sizeof(command));
-
-    fclose(fl);
     //TESTFILE worked just fine;
     return 0;
 }
